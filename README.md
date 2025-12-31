@@ -16,3 +16,8 @@ pip install requierments.txt
 cp .env.example .env 
 ```
 then set up you'r variables in the env file , like OPEN_API_KEY  value 
+
+##Run FastAPI server
+```bash
+uvicorn main:App --reload  --port 8000
+```
