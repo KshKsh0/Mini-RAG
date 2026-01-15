@@ -1,0 +1,10 @@
+A generative pre-trained transformer (GPT) is a type of large language model (LLM)[1][2][3] that is widely used in generative AI chatbots.[4][5] GPTs are based on a deep learning architecture called the transformer. They are pre-trained on large datasets of unlabeled content, and able to generate novel content.[2][3]
+
+OpenAI was the first to apply generative pre-training to the transformer architecture, introducing the GPT-1 model in 2018.[6] The company has since released many bigger GPT models. The popular chatbot ChatGPT, released in late 2022 (using GPT-3.5), was followed by many competitor chatbots using their own generative pre-trained transformers to generate text, such as Gemini, DeepSeek or Claude.[7]
+
+GPTs are primarily used to generate text, but can be trained to generate other kinds of data. For example, GPT-4o can process and generate text, images and audio.[8] To improve performance on complex tasks, some GPTs, such as OpenAI o3, allocate more computation time analyzing the problem before generating an output, and are called reasoning models. In 2025, GPT-5 was released with a router that automatically selects whether to use a faster model or slower reasoning model based on the provided task.
+
+Background
+According to The Economist, improved algorithms, more powerful computers, and an increase in the amount of digitized material fueled a revolution in machine learning during the 2010s. New techniques in the years before the AI boom resulted in "rapid improvements in tasks", including manipulating language.[9] Modern software models are trained to learn by using millions of examples in artificial neural networks that are inspired by biological neural structures.[9]
+
+Separately, the concept of generative pre-training (GP) was a long-established technique in machine learning. GP is a form of self-supervised learning wherein a model is first trained on a large, unlabeled dataset (the "pre-training" step) to learn to generate data points. This pre-trained model is then adapted to a specific task using a labeled dataset (the "fine-tuning" step).[10]
