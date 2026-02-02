@@ -17,7 +17,7 @@ class DataController(BaseController):
             return False ,ResponseSignal.FILE_TYPE_NOT_SUPPORTED.value
         return True , ResponseSignal.FILE_UPLOAD_SUCCESS.value
 
-    def gen_unique_filename(self, orig_file_name:str , project_id:str):
+    def gen_unique_filepath(self, orig_file_name:str , project_id:str):
         random_filename=self.gen_random_string()
         
         project_path = ProjectController().get_project_path(project_id= project_id)
@@ -29,7 +29,7 @@ class DataController(BaseController):
         while os.path.exists(new_file_path):
             random_filename=self.gen_random_string()
             new_file_path =os.path.join(project_path, random_filename+ '_' +cleaned_file_name   )
-        return new_file_path
+        return new_file_path , random_filename+ '_' +cleaned_file_name
  
 
 
