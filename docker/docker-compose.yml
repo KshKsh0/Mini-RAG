@@ -1,4 +1,4 @@
-services:
+sudservices:
   mongodb:
     image: mongo:noble
     container_name: mongodb
