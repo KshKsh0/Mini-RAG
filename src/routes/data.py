@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, UploadFile, File, status , Request
 from fastapi.responses import JSONResponse
 import aiofiles
+import os 
 from .schemes.data import PreprocessRequest
 from models import ResponseSignal
 from helper.config import get_settings, Settings
 from controller import DataController, ProjectController , ProcessController
 from models.ProjectModel import ProjectModel
-from models.db_schemes import DataChunk
+from models.db_schemes import DataChunk , Assets
 from models.ChunkModel import ChunkModel
+from models.AssetModel import AssetModel
+from models.enums.AssetTypeEnum  import AssetTypeEnum
 import logging
 
 logger = logging.getLogger('uvicorn.error')
@@ -48,10 +51,22 @@ async def upload_data(request : Request,
             status_code= status.HTTP_400_BAD_REQUEST,
             content={'signal' : ResponseSignal.FILE_UPLOAD_FAILED.value}
         )
+    
+# store the assets into the db
+    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    asset_resorce = Assets(
+        asset_project_id =project.id,
+        asset_type  =AssetTypeEnum.FILE.value,
+        asset_name = file_id,
+        asset_size = os.path.getsize(file_path)
+    )
+
+    asset_rec= await asset_model.create_asset(asset_resorce)
+   
 
     return JSONResponse(content={"signal": ResponseSignal.FILE_UPLOAD_SUCCESS.value , 
     
-    'file_id':file_id,
+    'file_id':str(asset_rec.id)
     
     })
 
