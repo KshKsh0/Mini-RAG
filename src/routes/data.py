@@ -24,7 +24,7 @@ async def upload_data(request : Request,
     app_settings: Settings = Depends(get_settings),
 ):
 
-    project_model = ProjectModel(db_client= request.app.db_client)
+    project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
     project = await project_model.get_project_or_create_one(project_id=project_id)
     data_controller = DataController()
     is_valid, res_signal = data_controller.validate_uploaded_file(file=file)
@@ -60,7 +60,7 @@ async def process_endpoint(project_id:str , process_request: PreprocessRequest, 
 
 
 
-    project_model = ProjectModel(db_client= request.app.db_client)
+    project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
     project = await project_model.get_project_or_create_one(project_id=project_id)
 
     file_id = process_request.file_id
@@ -78,7 +78,7 @@ async def process_endpoint(project_id:str , process_request: PreprocessRequest, 
             return JSONResponse(content={
                  "signal": ResponseSignal.PROCESSING_FAILED.value} )
     
-    chunk_model = ChunkModel(db_client= request.app.db_client  )
+    chunk_model = await ChunkModel.create_instance(db_client= request.app.db_client  )
          
     file_chunks_records = [
          DataChunk(chunk_text = chunk.page_content,

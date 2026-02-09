@@ -15,7 +15,15 @@ pip install requierments.txt
 ``` bash
 cp .env.example .env 
 ```
-then set up you'r variables in the env file , like OPEN_API_KEY  value 
+then set up you'r variables in the env file , like OPEN_API_KEY  value
+
+## Run Docker compose services 
+```bash
+$ cd docker 
+$ cp .env.example .env
+```
+- update `.env` with you'r credentials
+
 
 ## Run FastAPI server
 ```bash
