@@ -21,7 +21,7 @@ then set up you'r variables in the env file , like OPEN_API_KEY  value
 ```bash
 $ cd docker 
 $ cp .env.example .env
-$ sudo docker compose up 
+$ sudo docker compose up    
 ```
 - update `.env` with you'r credentials
  
