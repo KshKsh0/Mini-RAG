@@ -67,7 +67,7 @@ class OpenAIProvider(LLMinterface):
         if not response or not response.choices or len(response.choices) == 0 or not response.choices[0].message:
              self.logger.error('error while  generation text with OpenAI')
              return None
-        return response.choices[0].message['content']
+        return response.choices[0].message.content
 
 
 
@@ -101,7 +101,7 @@ class OpenAIProvider(LLMinterface):
     def process_text(self, text:str):
          return text[:self.defautl_input_max_characters].strip()
     
-    
+
     def construct_prompt(self, prompt:str , role:str):
          return {
               
