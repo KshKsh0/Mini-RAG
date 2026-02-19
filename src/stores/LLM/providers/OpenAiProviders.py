@@ -109,5 +109,7 @@ class OpenAIProvider(LLMinterface):
               'content': self.process_text(prompt)
          }
    
+     def process_text(self, text:str):
+         return text[:self.defautl_input_max_characters].strip()
 
 
