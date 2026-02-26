@@ -1,5 +1,5 @@
-from ...LLMinterface import LLMinterface 
-from ...LLMEmums import CoHereEnums
+from ..LLMinterface import LLMinterface 
+from ..LLMEmums import CoHereEnums
 import cohere
 import logging
 
@@ -27,7 +27,7 @@ class CoHereProvider(LLMinterface):
           self.generation_model_id = model_id
 
     
-    def set_embedding_mode(self, model_id:str , embedding_size :int):
+    def set_embedding_model(self, model_id:str , embedding_size :int):
           self.embedding_model_id = model_id
           self.embedding_size = embedding_size
 
@@ -77,14 +77,18 @@ class CoHereProvider(LLMinterface):
              self.logger.error('Embedding model id for Cohere was not set')
              return None
         
-        input_type = CoHereEnums.DOCUMENT.value if document_type == 'document' else CoHereEnums.QUERY.value
-        response = self.client.embed(
-            model=self.embedding_model_id,
-            input=[self.process_text(text)],
-            input_type=input_type,
-            embeding_types = ['float']
+        input_type = (
+            CoHereEnums.DOCUMENT.value
+            if document_type == "document"
+            else CoHereEnums.QUERY.value
         )
 
+        response = self.client.embed(
+            model=self.embedding_model_id,
+            texts=[self.process_text(text)],
+            input_type=input_type,
+            embedding_types=["float"],  # <-- fixed
+        )
         if not response or not response.embeddings or not response.embeddings.float:
             self.logger.error("Error embedding text with Cohere")
             return None

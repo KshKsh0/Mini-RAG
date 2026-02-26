@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     APP_NAME:str
     APP_VERSION:str
     OPENAI_API_KEY:str
+    GEMINI_API_KEY:str
     
     FILE_ALLOWED_TYPES:List[str]
     FILE_MAX_SIZE: int 
@@ -18,13 +19,17 @@ class Settings(BaseSettings):
     GENERATION_BACKEND:str
     EMBEDDING_BACKEND:str
     OPENAI_API_URL:str = None
-    COHERE_API_KEY:str =None      
+    COHERE_API_KEY:str     
     GENERATION_MODEL_ID:str = None
     EMBEDDING_MODEL_ID:str =None
     EMBEDDING_MODEL_SIZE:int =None
     INPUT_DAFUALT_MAX_CHARACTERS:int =None
     GENERATION_DAFUALT_MAX_TOKENS:int = None
     GENERATION_DAFUALT_TEMPERATURE:float =None
+
+    VECTOR_DB_BACKEND:str = 'QDRANT'
+    VECTOR_DB_PATH:str = 'qdrant_db'
+    VECTOR_DB_DISTANCE_METHOD:str ='COSIN'
     
 
     class Config:

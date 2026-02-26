@@ -1,5 +1,5 @@
 from typing import List, Optional
-
+from helper.config import get_settings
 from ..LLMinterface import LLMinterface 
 from ..LLMEmums import GeminiEnums
 from google import genai
@@ -13,6 +13,7 @@ class GeminiProvider(LLMinterface):
                  default_generation_temperature:float = 0.1):
 
             self.api_key = api_key
+            self.settings = get_settings()
             
             self.defautl_input_max_characters = default_input_max_characters
             self.defautl_generated_max_output = default_generated_max_output_token
@@ -20,8 +21,8 @@ class GeminiProvider(LLMinterface):
             
             self.generation_model_id =None
             
-            self.embedding_model_id = None
-            self.embedding_size = None
+            self.embedding_model_id = self.settings.EMBEDDING_MODEL_ID
+            self.embedding_size = self.settings.EMBEDDING_MODEL_SIZE
 
             self.client = genai.Client(
                   
@@ -41,7 +42,7 @@ class GeminiProvider(LLMinterface):
           self.generation_model_id = model_id
 
     
-    def set_embedding_mode(self, model_id:str , embedding_size :int):
+    def set_embedding_model(self, model_id:str , embedding_size :int):
           self.embedding_model_id = model_id
           self.embedding_size = embedding_size
 
@@ -109,26 +110,30 @@ class GeminiProvider(LLMinterface):
 
 
 
-    def embedd_text(self ,text :str ):
-         
+    def embedd_text(self, text: str):
         if not self.client:
-            self.logger.error("Gemini client was not set")
-            return None
+            raise RuntimeError("Gemini client was not set")
 
         if not self.embedding_model_id:
-            self.logger.error("Embedding model for Gemini was not set")
-            return None
-        
+            raise RuntimeError("Embedding model for Gemini was not set")
+
+        if text is None:
+            raise ValueError("Embedding text is None")
+
+        clean = self.process_text(text)
+        if not clean:
+            raise ValueError("Empty text after process_text()")
         try:
-                resp = self.client.models.embed_content(
+            resp = self.client.models.embed_content(
                 model=self.embedding_model_id,
-                contents=self.process_text(text),
+                contents=clean,
+                config=types.EmbedContentConfig(output_dimensionality=self.embedding_size),
             )
-        except Exception as e:
-             self.logger.exception(f'error while embedding text using gemini {e}')
-             return None
-        try:
             return resp.embeddings[0].values
-        except Exception:
-            self.logger.error("Unexpected embedding response format from Gemini")
-            return None
+
+        except Exception as e:
+            # Don't hide it behind "None"
+            raise RuntimeError(
+                f"Gemini embed failed: model={self.embedding_model_id!r} "
+                f"clean_len={len(clean)} preview={clean[:120]!r} err={repr(e)}"
+            ) from e

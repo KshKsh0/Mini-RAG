@@ -1,5 +1,5 @@
 from .LLMEmums import LLMEnum
-from .providers import CoHereProvider , OpenAIProvider
+from .providers import CoHereProvider , OpenAIProvider , GeminiProvider
 
 class LLMProviderFactory:
     def __init__(self, config:dict):
@@ -21,5 +21,13 @@ class LLMProviderFactory:
                 default_generated_max_output_token = self.config.GENERATION_DAFUALT_MAX_TOKENS,
                 default_generation_temperature = self.config.GENERATION_DAFUALT_TEMPERATURE
             )
-        
+        if providers == LLMEnum.GEMINI.value:
+            return GeminiProvider(
+
+                api_key = self.config.GEMINI_API_KEY,
+                default_input_max_characters = self.config.INPUT_DAFUALT_MAX_CHARACTERS,
+                default_generated_max_output_token = self.config.GENERATION_DAFUALT_MAX_TOKENS,
+                default_generation_temperature = self.config.GENERATION_DAFUALT_TEMPERATURE
+
+            )
         return None

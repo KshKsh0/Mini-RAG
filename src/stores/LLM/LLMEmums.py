@@ -3,6 +3,7 @@ from enum import Enum
 class LLMEnum(Enum):
     OPENAI = 'OPENAI'
     COHERE = 'COHERE'
+    GEMINI = 'GEMINI'
 
 class OpenAIEnum(Enum):
     SYSTEM ='system'
