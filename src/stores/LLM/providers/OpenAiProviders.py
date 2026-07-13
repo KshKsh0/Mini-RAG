@@ -1,5 +1,6 @@
 from ..LLMinterface import LLMinterface 
 from openai import OpenAI
+from helper.config import get_settings
 from ..LLMEmums import OpenAIEnum
 import logging
 class OpenAIProvider(LLMinterface):
@@ -17,11 +18,14 @@ class OpenAIProvider(LLMinterface):
             self.defautl_generated_max_output = default_generated_max_output_token
             self.default_generation_temperature = default_generation_temperature
             
-            self.generation_model_id =None
+            self.settings = get_settings()
+            self.generation_model_id = self.settings.GENERATION_MODEL_ID
             
-            self.embedding_model_id = None
-            self.embedding_size = None
+            self.embedding_model_id = self.settings.EMBEDDING_MODEL_ID
+            self.embedding_size = self.settings.EMBEDDING_MODEL_SIZE
 
+            self.enums = OpenAIEnum
+            
             self.client = OpenAI(
                   
                   api_key=self.api_key,
@@ -34,9 +38,9 @@ class OpenAIProvider(LLMinterface):
           self.generation_model_id = model_id
 
 
-    def set_embedding_mode(self, model_id:str , embedding_size :int):
-          self.embedding_model_id = model_id
-          self.embedding_size = embedding_size
+    def set_embedding_model(self, model_id: str, embedding_size: int):
+     self.embedding_model_id = model_id
+     self.embedding_size = embedding_size
 
 
 #code smells : code will raise error but u dont know where 
@@ -59,10 +63,14 @@ class OpenAIProvider(LLMinterface):
         # system messages = what the llm or agent should do ? 'You are an helpfull assistance' , 'you have a phd in AI  i want you to answer these question ' you norrow him to task you want 
         chat_history.append(self.construct_prompt(prompt=prompt , role=OpenAIEnum.USER.value))
 
-        response = self.client.chat.completions.create(modle = self.generation_model_id,
-                                                       messages= chat_history,
-                                                       max_tokens = max_output_tokens,
-                                                       temprature = temprature)
+        response = self.client.chat.completions.create(
+    model=self.generation_model_id,
+    messages=chat_history,
+    max_tokens=max_output_tokens,
+    temperature=temprature,
+        reasoning_effort="none"
+
+)
         
         if not response or not response.choices or len(response.choices) == 0 or not response.choices[0].message:
              self.logger.error('error while  generation text with OpenAI')
@@ -71,7 +79,7 @@ class OpenAIProvider(LLMinterface):
 
 
 
-    def embed_text(self, text , document_type :str):
+    def embed_text(self, text:str):
         
         if not self.client:
              self.logger.error('OpenAI client was not set')

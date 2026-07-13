@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status , Request
+from fastapi.encoders import jsonable_encoder
 import logging 
 from controller import NLPController
 from fastapi.responses import JSONResponse
@@ -41,7 +42,8 @@ async def index_project(request : Request , project_id:str ,push_request:PushReq
 
         vectordb_clinet=request.app.vectordb_client,
         embedding_client=request.app.embedding_client,
-        generatoin_client=request.app.generation_client
+        generatoin_client=request.app.generation_client,
+        template_parser = request.app.template_parser
     )
 
     has_records = True
@@ -84,7 +86,7 @@ async def index_project(request : Request , project_id:str ,push_request:PushReq
         # chunks = chunk_model.get_project_chunks(project_id = project.project_id)
 
 
-@nlp_router.get('/index/push/{project_id}')
+@nlp_router.get('/index/info/{project_id}')
 async def get_project_index_info(request:Request , project_id:str):
     project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
 
@@ -126,7 +128,8 @@ async def index_project(request:Request , project_id , search_request:SearchRequ
 
         vectordb_clinet=request.app.vectordb_client,
         embedding_client=request.app.embedding_client,
-        generatoin_client=request.app.generation_client
+        generatoin_client=request.app.generation_client,
+        template_parser= request.app.template_parser
     )
     
     res = nlp_controller.search_vector_db_collection(
@@ -137,7 +140,7 @@ async def index_project(request:Request , project_id , search_request:SearchRequ
     if not res:
          return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content={'signal': ResponseSignal.INSERTED_TO_VECTOR_DB_ERROR.value}
+                content={'signal': ResponseSignal.VECTOR_SEARCH_FAILED.value}
             )
 
 
@@ -145,6 +148,48 @@ async def index_project(request:Request , project_id , search_request:SearchRequ
         content={
 
             'signal':ResponseSignal.VECTOR_SEARCH_DONE.value,
-            'result' : res,
+            'result' :  jsonable_encoder(res)
         })
 
+
+
+
+@nlp_router.post('/index/answer/{project_id}')
+async def index_project(request:Request , project_id , search_request:SearchRequest):
+     
+     
+    project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
+
+
+    project = await project_model.get_project_or_create_one(
+
+        project_id = project_id
+    )
+    nlp_controller = NLPController(
+
+        vectordb_clinet=request.app.vectordb_client,
+        embedding_client=request.app.embedding_client,
+        generatoin_client=request.app.generation_client,
+        template_parser=request.app.template_parser
+    )
+
+    answer , full_prompt , chat_history = nlp_controller.answer_rag_question(
+
+        project = project , query=search_request.text ,
+        limit = search_request.limit
+    )
+
+    if not answer :
+        return JSONResponse(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            content={'signal': ResponseSignal.RAG_ANSWER_ERROR.value}
+        )
+    
+    return JSONResponse(
+        content={
+            'signal': ResponseSignal.RAG_ANSWER_SUCCESS.value,
+            'answer': answer,
+            'full_prompt': full_prompt,
+            'chat_history': chat_history
+        }
+    )

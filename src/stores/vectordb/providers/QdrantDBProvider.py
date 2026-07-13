@@ -4,6 +4,8 @@ import uuid
 from qdrant_client import QdrantClient , models
 from typing import List
 import logging
+from qdrant_client.http.models import Filter
+from models.db_schemes import  RetrievedDocument
 
 class QdrantDB(VectorDBInterface):
 
@@ -132,7 +134,7 @@ class QdrantDB(VectorDBInterface):
      with_payload: bool = True,
      with_vectors: bool = False,):
                
-               return self.client.query_points(
+      results = self.client.query_points(
           collection_name=collection_name,
           query=vector,               # dense vector = nearest neighbor search
           limit=limit,
@@ -140,11 +142,18 @@ class QdrantDB(VectorDBInterface):
           with_payload=with_payload,
           with_vectors=with_vectors,
      )
+      points = getattr(results, "points", [])
 
-          
-     
+      documents = []
 
-     
+      for point in points:
+               payload = point.payload or {}
 
+               documents.append(
+               RetrievedDocument(
+                    score=point.score,
+                    text=payload.get("text", "")
+               )
+               )
 
-     
+      return documents
