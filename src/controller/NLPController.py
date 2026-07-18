@@ -119,7 +119,7 @@ class NLPController(BaseController):
                     "document_prompt",
                     {
                          "doc_no": idx + 1,
-                         "content": doc["text"]
+                         "content":self.generatoin_client.process_text( doc["text"])
                     }
                )
 

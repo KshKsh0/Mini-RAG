@@ -16,7 +16,7 @@ nlp_router = APIRouter(
 )
 
 @nlp_router.post('/index/push/{project_id}')
-async def index_project(request : Request , project_id:str ,push_request:PushRequest ):
+async def index_project(request : Request , project_id:int ,push_request:PushRequest ):
     
     project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
 
@@ -53,7 +53,7 @@ async def index_project(request : Request , project_id:str ,push_request:PushReq
 
     while True:
         page_chunks = await chunk_model.get_project_chunk(
-            project_id=project.id,
+            project_id=project.project_id,
             page_no=page_no,
             page_size=page_size
         )
@@ -87,7 +87,7 @@ async def index_project(request : Request , project_id:str ,push_request:PushReq
 
 
 @nlp_router.get('/index/info/{project_id}')
-async def get_project_index_info(request:Request , project_id:str):
+async def get_project_index_info(request:Request , project_id:int):
     project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
 
 
@@ -99,7 +99,8 @@ async def get_project_index_info(request:Request , project_id:str):
 
         vectordb_clinet=request.app.vectordb_client,
         embedding_client=request.app.embedding_client,
-        generatoin_client=request.app.generation_client
+        generatoin_client=request.app.generation_client,
+        template_parser=request.app.template_parser
     )
     #not doc , it statues code different polymorphic
     collection_info =  nlp_controller.get_db_collection_info(project= project)

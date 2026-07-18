@@ -4,6 +4,13 @@ This is a minimal implementation of RAG system for question-answering
 ## Requirements 
 - python 3.8 or later 
 
+
+## Install Dependencies (linux)
+```bash 
+
+sudo apt update
+sudo apt install libpq-dev gcc python3-dev
+```
 ## installation
 
 ### install the reqiuerments
@@ -30,4 +37,25 @@ $ sudo docker compose up
 ## Run FastAPI server
 ```bash
 uvicorn main:App --reload  --port 8000
+```
+
+## Run Alembic Migration
+
+
+### Configuration
+```bash 
+cp alembic.ini.example alembic.ini
+```
+- update the alembic.ini with you'r database credentials ('sqlalchemy.url)
+
+### (Optional) Create new migration 
+
+```bash
+alembic revision --autogenerate -m 'ADD ..'
+```
+
+### Upgrade the database
+
+```bash
+alembic upgrade head
 ```

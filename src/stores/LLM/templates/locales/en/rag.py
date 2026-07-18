@@ -23,4 +23,4 @@ footer_prompt = Template("\n".join([
     "Based only on the documents above, answer the user's question.",
     "### Question: $query",
     "### Answer:"
-]))
+])) 
