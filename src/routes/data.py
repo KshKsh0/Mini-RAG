@@ -1,0 +1,169 @@
+from fastapi import APIRouter, Depends, UploadFile, File, status , Request
+from fastapi.responses import JSONResponse
+import aiofiles
+import os 
+from .schemes.data import PreprocessRequest
+from models import ResponseSignal
+from helper.config import get_settings, Settings
+from controller import DataController, ProjectController , ProcessController
+from models.ProjectModel import ProjectModel
+from models.db_schemes import DataChunk , Asset
+from models.ChunkModel import ChunkModel
+from models.AssetModel import AssetModel
+from models.enums.AssetTypeEnum  import AssetTypeEnum
+import logging
+
+logger = logging.getLogger('uvicorn.error')
+
+data_router = APIRouter(
+    prefix="/api/v1/data",
+    tags=["api V1", "data"]
+)
+
+@data_router.post("/upload/{project_id}")
+async def upload_data(request : Request,
+    project_id: int,
+    file: UploadFile = File(...),
+    app_settings: Settings = Depends(get_settings),
+):
+
+    project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
+    project = await project_model.get_project_or_create_one(project_id=project_id)
+    data_controller = DataController()
+    is_valid, res_signal = data_controller.validate_uploaded_file(file=file)
+
+    if not is_valid:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"signal": res_signal},
+        )
+
+    file_path , file_id  = data_controller.gen_unique_filepath(file.filename, str(project_id))
+    try:
+
+        async with aiofiles.open(file_path, "wb") as f:
+            while chunk := await file.read(app_settings.FILE_DEFAULT_CHUNK_SIZE):
+                await f.write(chunk)
+    except Exception as e :
+        logger.error(f'Error while uploading file: {e}') # dont show the user all the thing dont be generice
+        return JSONResponse(
+
+            status_code= status.HTTP_400_BAD_REQUEST,
+            content={'signal' : ResponseSignal.FILE_UPLOAD_FAILED.value}
+        )
+    
+# store the assets into the db
+    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    asset_resorce = Asset(
+        asset_project_id =project.project_id,
+        asset_type  =AssetTypeEnum.FILE.value,
+        asset_name = file_id,
+        asset_size = os.path.getsize(file_path)
+    )
+
+    asset_rec= await asset_model.create_asset(asset_resorce)
+   
+
+    return JSONResponse(content={"signal": ResponseSignal.FILE_UPLOAD_SUCCESS.value , 
+    
+    'file_id':str(asset_rec.asset_id)
+    
+    })
+
+@data_router.post('/process/{project_id}')
+async def process_endpoint(project_id:int , process_request: PreprocessRequest, request : Request ):
+
+
+
+    project_model = await ProjectModel.create_instance(db_client= request.app.db_client)
+    project = await project_model.get_project_or_create_one(project_id=project_id)
+    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+
+    # file_id = process_request.file_id
+    chunk_size = process_request.chunk_size
+    overlap= process_request.overlap
+    do_reset = process_request.do_reset
+
+    project_file_ids: dict[int, str] = {}
+
+    if process_request.file_id:
+        asset_record = await asset_model.get_asset_record(
+            asset_project_id=project.project_id,
+            asset_name=process_request.file_id,
+        )
+
+        if asset_record is None:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "signal": ResponseSignal.FILE_ID_ERROR.value,
+                },
+            )
+
+        project_file_ids = {
+            asset_record.asset_id: asset_record.asset_name
+        }
+
+    else:
+        project_files = await asset_model.get_all_project_assets(
+            assets_project_id=project.project_id,
+            asset_type=AssetTypeEnum.FILE.value,
+        )
+
+        project_file_ids = {
+            record.asset_id: record.asset_name
+            for record in project_files
+        }
+        
+    if len(project_file_ids) == 0 :
+         return JSONResponse(
+              status_code = status.HTTP_400_BAD_REQUEST,
+              content = {
+                   'signal':ResponseSignal.NO_FILES_ERROR.value,
+                   'lol':project_file_ids
+              }
+         )
+          
+
+    process_controller = ProcessController(project_id= project_id)
+    no_rec = 0
+    no_file = 0
+    chunk_model = await ChunkModel.create_instance(db_client= request.app.db_client  )
+
+    if do_reset == 1:
+            no_deleted = await chunk_model.delete_chunks_by_project_id(project_id = project.project_id)
+
+    for _id, file_id  in project_file_ids.items(): 
+
+           
+        file_content = process_controller.get_file_content(file_id=file_id)
+        if not file_content:
+             logger.error(f'error while processing file {file_id}') 
+        file_chunks = process_controller.process_file_content(chunk_size=chunk_size , 
+                                                            file_id=file_id , overlap=overlap
+                                                            , file_content=file_content)
+        
+        if file_chunks is None  or len(file_chunks) == 0:
+                return JSONResponse(content={
+                    "signal": ResponseSignal.PROCESSING_FAILED.value} )
+        
+            
+        file_chunks_records = [
+            DataChunk(chunk_text = chunk.page_content,
+                    chunk_metadata= chunk.metadata, 
+                    chunk_project_id=project.project_id,
+                    chunk_order =i+1 ,
+                    chunk_assets_id=_id
+                    )
+            for i, chunk in enumerate(file_chunks)
+        ]
+
+
+        no_rec += await chunk_model.insert_many_chunk(chunks=file_chunks_records)
+        no_file += 1 
+    return JSONResponse(content ={
+            
+                'signal':ResponseSignal.PROCESSING_SUCCESS.value,
+                'inserted_chunks':no_rec,
+                'processed_file' : no_file 
+        })

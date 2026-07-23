@@ -1,0 +1,48 @@
+Transformers: A Short Overview
+
+Transformers are a neural network architecture introduced in 2017 in the paper “Attention Is All You Need” by Google Brain. They replaced older sequence models like RNNs and LSTMs by relying entirely on an attention mechanism.
+
+Core Idea: Self-Attention
+
+Instead of processing words one by one, transformers look at the entire sentence at once.
+Each token creates three vectors:
+
+Query (Q)
+
+Key (K)
+
+Value (V)
+
+Attention scores determine how strongly words relate to each other. This allows the model to capture long-range dependencies efficiently.
+
+Architecture
+
+A transformer layer contains:
+
+Multi-head self-attention
+
+Feed-forward neural network
+
+Residual connections
+
+Layer normalization
+
+Models can be:
+
+Encoder-only (e.g., BERT) for understanding tasks
+
+Decoder-only (e.g., GPT) for text generation
+
+Encoder-decoder (e.g., T5) for translation and transformation tasks
+
+Why Transformers Matter
+
+They enable:
+
+Parallel training
+
+Better long-distance context modeling
+
+Large-scale language models
+
+Most modern NLP systems today are built on transformer architectures.
